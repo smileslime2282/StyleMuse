@@ -66,14 +66,7 @@ export default function Home(){
     setBusy(false);
   }
 }
-  if(!photo){setError("Please upload a photo first.");return;}
-  setBusy(true);setError("");setResult(null);
-  try{
-   const fd=new FormData();fd.append("photo",photo);fd.append("profile",JSON.stringify(form));fd.append("language",lang);
-   const res=await fetch("/api/analyze",{method:"POST",body:fd});
-   const data=await res.json();if(!res.ok)throw new Error(data.error||t.error);setResult(data);
-  }catch(e:any){setError(e.message||t.error)}finally{setBusy(false)}
- }
+  
  return <main dir={lang==="ar"?"rtl":"ltr"}>
   <header className="top"><a className="brand" href="#">style<span>muse</span><i>.</i></a><div className="navright"><span>{t.nav}</span><select aria-label={t.language} value={lang} onChange={e=>setLang(e.target.value)}>{languageOptions.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}{moreLanguages.map(o=><option key={o} value={o}>{({es:"Español",fr:"Français",it:"Italiano",pt:"Português",nl:"Nederlands",pl:"Polski",tr:"Türkçe",ar:"العربية",hi:"हिन्दी",ja:"日本語",ko:"한국어",zh:"中文"} as any)[o]}</option>)}</select></div></header>
   <section className="hero"><div className="heroText"><div className="eyebrow">{t.tag}</div><h1>{t.title}</h1><p>{t.intro}</p><a className="primary" href="#scanner">{t.start} <b>↗</b></a><div className="micro">✦ Personal ideas · Practical tutorials · Your own style</div></div><div className="heroVisual"><div className="halo"></div><div className="heroBadge">THE PERSONAL HAIR EDIT <b>✦</b></div><div className="heroCaption">A little inspiration,<br/><em>made just for you.</em></div></div></section>
