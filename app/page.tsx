@@ -32,6 +32,43 @@ export default function Home(){
   if(!photo){setError("Please upload a photo first.");return;}
   setBusy(true);setError("");setResult(null);
   try{
+    const compressed = await new Promise<File>((resolve,reject)=>{
+      const img = new Image();
+      const url = URL.createObjectURL(photo);
+      img.onload = ()=>{
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(1,1400/Math.max(img.width,img.height));
+        canvas.width = Math.round(img.width*scale);
+        canvas.height = Math.round(img.height*scale);
+        const ctx = canvas.getContext("2d");
+        if(!ctx){URL.revokeObjectURL(url);reject(new Error("Image error"));return;}
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        canvas.toBlob(blob=>{
+          URL.revokeObjectURL(url);
+          if(!blob){reject(new Error("Image compression failed"));return;}
+          resolve(new File([blob],"stylemuse-photo.jpg",{type:"image/jpeg"}));
+        },"image/jpeg",0.78);
+      };
+      img.onerror = ()=>{URL.revokeObjectURL(url);reject(new Error("Could not read photo"));};
+      img.src=url;
+    });
+    const fd=new FormData();
+    fd.append("photo",compressed);
+    fd.append("profile",JSON.stringify(form));
+    fd.append("language",lang);
+    const res=await fetch("/api/analyze",{method:"POST",body:fd});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||t.error);
+    setResult(data);
+  }catch(e:any){
+    setError(e.message||t.error);
+  }finally{
+    setBusy(false);
+  }
+}
+  if(!photo){setError("Please upload a photo first.");return;}
+  setBusy(true);setError("");setResult(null);
+  try{
    const fd=new FormData();fd.append("photo",photo);fd.append("profile",JSON.stringify(form));fd.append("language",lang);
    const res=await fetch("/api/analyze",{method:"POST",body:fd});
    const data=await res.json();if(!res.ok)throw new Error(data.error||t.error);setResult(data);
