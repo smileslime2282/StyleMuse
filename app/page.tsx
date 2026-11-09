@@ -25,6 +25,9 @@ const moreLanguages = ["es","fr","it","pt","nl","pl","tr","ar","hi","ja","ko","z
 export default function Home(){
  const [lang,setLang]=useState("en"), [photo,setPhoto]=useState<File|null>(null), [preview,setPreview]=useState(""), [busy,setBusy]=useState(false), [result,setResult]=useState<any>(null), [error,setError]=useState("");
  const [form,setForm]=useState({texture:"Wavy",density:"Medium",face:"Not sure",length:"Shoulder length",time:"10 minutes",vibe:"Natural and effortless"});
+ const [tryOnBusy,setTryOnBusy]=useState(false);
+const [tryOnImage,setTryOnImage]=useState("");
+const [tryOnError,setTryOnError]=useState("");
  const t=translations[lang]||extraTranslations[lang]||translations.en;
  const labels:any={texture:[t.straight,t.wavy,t.curly,t.coily],density:[t.fine,t.medium,t.thick],face:[t.unknown,t.oval,t.round,t.square,t.heart,t.oblong,t.diamond],length:[t.short,t.shoulder,t.long],time:[t.five,t.ten,t.twenty,t.more],vibe:[t.natural,t.polished,t.playful,t.romantic,t.bold]};
  const options:any={texture:["Straight","Wavy","Curly","Coily"],density:["Fine","Medium","Thick"],face:["Not sure","Oval","Round","Square","Heart","Oblong","Diamond"],length:["Short","Shoulder length","Long"],time:["5 minutes or less","10 minutes","15–20 minutes","30+ minutes"],vibe:["Natural and effortless","Elegant and polished","Trendy and playful","Soft and romantic","Bold and edgy"]};
@@ -66,7 +69,31 @@ export default function Home(){
     setBusy(false);
   }
 }
-  
+  async function tryOn(){
+  if(!photo||!result?.hairstyle)return;
+  setTryOnBusy(true);
+  setTryOnError("");
+  setTryOnImage("");
+
+  try{
+    const fd=new FormData();
+    fd.append("photo",photo);
+    fd.append("hairstyle",result.hairstyle);
+
+    const res=await fetch("/api/try-on",{
+      method:"POST",
+      body:fd
+    });
+    const data=await res.json();
+
+    if(!res.ok)throw new Error(data.error||"Virtual Try-On failed.");
+    setTryOnImage(data.image);
+  }catch(e:any){
+    setTryOnError(e.message||"Virtual Try-On failed.");
+  }finally{
+    setTryOnBusy(false);
+  }
+  }
  return <main dir={lang==="ar"?"rtl":"ltr"}>
   <header className="top"><a className="brand" href="#">style<span>muse</span><i>.</i></a><div className="navright"><span>{t.nav}</span><select aria-label={t.language} value={lang} onChange={e=>setLang(e.target.value)}>{languageOptions.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}{moreLanguages.map(o=><option key={o} value={o}>{({es:"Español",fr:"Français",it:"Italiano",pt:"Português",nl:"Nederlands",pl:"Polski",tr:"Türkçe",ar:"العربية",hi:"हिन्दी",ja:"日本語",ko:"한국어",zh:"中文"} as any)[o]}</option>)}</select></div></header>
   <section className="hero"><div className="heroText"><div className="eyebrow">{t.tag}</div><h1>{t.title}</h1><p>{t.intro}</p><a className="primary" href="#scanner">{t.start} <b>↗</b></a><div className="micro">✦ Personal ideas · Practical tutorials · Your own style</div></div><div className="heroVisual"><div className="halo"></div><div className="heroBadge">THE PERSONAL HAIR EDIT <b>✦</b></div><div className="heroCaption">A little inspiration,<br/><em>made just for you.</em></div></div></section>
@@ -78,7 +105,26 @@ export default function Home(){
     <button className="primary full" disabled={busy} onClick={analyze}>{busy?t.loading:t.analyze}</button>{error&&<p className="error">{error}</p>}
     </div></div>
   </section>
-  {result&&<section className="results"><div className="eyebrow">02 — YOUR PERSONAL RECOMMENDATION</div><h2>{t.result}</h2><div className="resultHero"><div><div className="tiny">YOUR SIGNATURE LOOK</div><h3>{result.hairstyle}</h3><p>{result.summary}</p></div><span>✦</span></div><div className="resultCards"><article><h4>{t.why}</h4><p>{result.why}</p></article><article><h4>{t.routine}</h4><ol>{(result.steps||[]).map((s:string,i:number)=><li key={i}>{s}</li>)}</ol></article><article><h4>{t.tools}</h4><ul>{(result.tools||[]).map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></article><article><h4>{t.salon}</h4><p>{result.salon_request}</p></article></div><p className="disclaimer">{t.disclaimer}</p></section>}
+  {result&&<section className="results"><div className="eyebrow">02 — YOUR PERSONAL RECOMMENDATION</div><h2>{t.result}</h2><div className="resultHero"><div><div className="tiny">YOUR SIGNATURE LOOK</div><h3>{result.hairstyle}</h3><p>{result.summary}</p></div><span>✦</span></div><div className="resultCards"><article><h4>{t.why}</h4><p>{result.why}</p></article><article><h4>{t.routine}</h4><ol>{(result.steps||[]).map((s:string,i:number)=><li key={i}>{s}</li>)}</ol></article><article><h4>{t.tools}</h4><ul>{(result.tools||[]).map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></article><article><h4>{t.salon}</h4><p>{result.salon_request}</p></article></div>
+   <div className="tryOnPanel">
+  <h3>{lang==="sr"?"Isprobaj ovu frizuru na sebi":"Try this hairstyle on yourself"}</h3>
+  <button
+    className="primary full"
+    disabled={tryOnBusy}
+    onClick={tryOn}
+  >
+    {tryOnBusy?"Creating your look…":"Try Virtual Try-On ✦"}
+  </button>
+  {tryOnError&&<p className="error">{tryOnError}</p>}
+  {tryOnImage&&
+    <img
+      src={tryOnImage}
+      alt="Virtual hairstyle try-on"
+      style={{width:"100%",maxWidth:600,borderRadius:16,marginTop:16}}
+    />
+  }
+</div>
+   <p className="disclaimer">{t.disclaimer}</p></section>}
   <footer><a className="brand" href="#">style<span>muse</span><i>.</i></a><p>Beauty is personal. Your style should be, too.</p><small>© 2026 StyleMuse · Privacy-first by design</small></footer>
  </main>
 }
