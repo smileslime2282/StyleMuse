@@ -77,7 +77,29 @@ const [tryOnError,setTryOnError]=useState("");
 
   try{
     const fd=new FormData();
-    fd.append("photo",photo);
+    const bitmap = await createImageBitmap(photo);
+const canvas = document.createElement("canvas");
+
+const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+
+canvas.width = Math.round(bitmap.width * scale);
+canvas.height = Math.round(bitmap.height * scale);
+
+const ctx = canvas.getContext("2d");
+if (!ctx) throw new Error("Cannot process photo.");
+
+ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+bitmap.close();
+
+const compressed = await new Promise<Blob>((resolve, reject) => {
+  canvas.toBlob(
+    blob => blob ? resolve(blob) : reject(new Error("Photo compression failed.")),
+    "image/jpeg",
+    0.8
+  );
+});
+
+fd.append("photo", compressed, "photo.jpg");
     fd.append("hairstyle",result.hairstyle);
 
     const res=await fetch("/api/try-on",{
