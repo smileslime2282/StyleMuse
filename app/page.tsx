@@ -122,7 +122,14 @@ const [tryOnError,setTryOnError]=useState("");
       alt="Virtual hairstyle try-on"
       style={{width:"100%",maxWidth:600,borderRadius:16,marginTop:16}}
     />
-  }
+  <a
+  href={tryOnImage}
+  download="StyleMuse-hairstyle.png"
+  className="primary full"
+  style={{display:"block",textAlign:"center",marginTop:12}}
+>
+  Download Photo ↓
+</a>}
 </div>
    <p className="disclaimer">{t.disclaimer}</p></section>}
   <footer><a className="brand" href="#">style<span>muse</span><i>.</i></a><p>Beauty is personal. Your style should be, too.</p><small>© 2026 StyleMuse · Privacy-first by design</small></footer>
