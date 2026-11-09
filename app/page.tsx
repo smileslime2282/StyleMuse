@@ -116,13 +116,23 @@ const [tryOnError,setTryOnError]=useState("");
     {tryOnBusy?"Creating your look…":"Try Virtual Try-On ✦"}
   </button>
   {tryOnError&&<p className="error">{tryOnError}</p>}
-  {tryOnImage&&
-    <img
-      src={tryOnImage}
-      alt="Virtual hairstyle try-on"
-      style={{width:"100%",maxWidth:600,borderRadius:16,marginTop:16}}
-    />
-  <a
+    {tryOnImage&&(
+    <>
+      <img
+        src={tryOnImage}
+        alt="Virtual hairstyle try-on"
+        style={{width:"100%",maxWidth:600,borderRadius:16,marginTop:16}}
+      />
+      <a
+        href={tryOnImage}
+        download="StyleMuse-hairstyle.png"
+        className="primary full"
+        style={{display:"block",textAlign:"center",marginTop:12}}
+      >
+        Download Photo ↓
+      </a>
+    </>
+  )}
   href={tryOnImage}
   download="StyleMuse-hairstyle.png"
   className="primary full"
