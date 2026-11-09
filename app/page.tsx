@@ -133,9 +133,6 @@ const [tryOnError,setTryOnError]=useState("");
       </a>
     </>
   )}
-  href={tryOnImage}
-  download="StyleMuse-hairstyle.png"
-  className="primary full"
   style={{display:"block",textAlign:"center",marginTop:12}}
 >
   Download Photo ↓
