@@ -70,53 +70,71 @@ const [tryOnError,setTryOnError]=useState("");
   }
 }
   async function tryOn(){
+  
+async function tryOn(){
   if(!photo||!result?.hairstyle)return;
+
   setTryOnBusy(true);
   setTryOnError("");
   setTryOnImage("");
 
   try{
-    const fd=new FormData();
     const bitmap = await createImageBitmap(photo);
-const canvas = document.createElement("canvas");
+    const canvas = document.createElement("canvas");
 
-const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(
+      1,
+      1024 / Math.max(bitmap.width, bitmap.height)
+    );
 
-canvas.width = Math.round(bitmap.width * scale);
-canvas.height = Math.round(bitmap.height * scale);
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
 
-const ctx = canvas.getContext("2d");
-if (!ctx) throw new Error("Cannot process photo.");
+    const ctx = canvas.getContext("2d");
+    if(!ctx) throw new Error("Cannot process photo.");
 
-ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-bitmap.close();
+    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    bitmap.close();
 
-const compressed = await new Promise<Blob>((resolve, reject) => {
-  canvas.toBlob(
-    blob => blob ? resolve(blob) : reject(new Error("Photo compression failed.")),
-    "image/jpeg",
-    0.8
-  );
-});
+    const compressed = await new Promise<Blob>((resolve,reject)=>{
+      canvas.toBlob(
+        blob=>blob?resolve(blob):reject(new Error("Photo compression failed.")),
+        "image/jpeg",
+        0.65
+      );
+    });
 
-fd.append("photo", compressed, "photo.jpg");
+    const fd = new FormData();
+    fd.append("photo",compressed,"photo.jpg");
     fd.append("hairstyle",result.hairstyle);
 
-    const res=await fetch("/api/try-on",{
+    const res = await fetch("/api/try-on",{
       method:"POST",
       body:fd
     });
-    const data=await res.json();
 
-    if(!res.ok)throw new Error(data.error||"Virtual Try-On failed.");
+    const responseText = await res.text();
+    let data:any;
+
+    try{
+      data = JSON.parse(responseText);
+    }catch{
+      throw new Error(responseText.slice(0,250)||"Invalid server response.");
+    }
+
+    if(!res.ok) throw new Error(data.error||"Virtual Try-On failed.");
+    if(!data.image) throw new Error("No generated image returned.");
+
     setTryOnImage(data.image);
+
   }catch(e:any){
     setTryOnError(e.message||"Virtual Try-On failed.");
   }finally{
     setTryOnBusy(false);
   }
-  }
- return <main dir={lang==="ar"?"rtl":"ltr"}>
+}
+
+   return <main dir={lang==="ar"?"rtl":"ltr"}>
   <header className="top"><a className="brand" href="#">style<span>muse</span><i>.</i></a><div className="navright"><span>{t.nav}</span><select aria-label={t.language} value={lang} onChange={e=>setLang(e.target.value)}>{languageOptions.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}{moreLanguages.map(o=><option key={o} value={o}>{({es:"Español",fr:"Français",it:"Italiano",pt:"Português",nl:"Nederlands",pl:"Polski",tr:"Türkçe",ar:"العربية",hi:"हिन्दी",ja:"日本語",ko:"한국어",zh:"中文"} as any)[o]}</option>)}</select></div></header>
   <section className="hero"><div className="heroText"><div className="eyebrow">{t.tag}</div><h1>{t.title}</h1><p>{t.intro}</p><a className="primary" href="#scanner">{t.start} <b>↗</b></a><div className="micro">✦ Personal ideas · Practical tutorials · Your own style</div></div><div className="heroVisual"><div className="halo"></div><div className="heroBadge">THE PERSONAL HAIR EDIT <b>✦</b></div><div className="heroCaption">A little inspiration,<br/><em>made just for you.</em></div></div></section>
   <section id="scanner" className="scanner"><div className="sectionIntro"><div className="eyebrow">01 — YOUR STYLE PROFILE</div><h2>Let's get to know<br/><em>your hair.</em></h2><p>Share a photo and a few details. Your stylist will use both to create a practical, personalized plan.</p></div>
