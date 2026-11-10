@@ -69,8 +69,6 @@ const [tryOnError,setTryOnError]=useState("");
     setBusy(false);
   }
 }
-  async function tryOn(){
-  
 async function tryOn(){
   if(!photo||!result?.hairstyle)return;
 
