@@ -28,6 +28,10 @@ export default function Home(){
  const [tryOnBusy,setTryOnBusy]=useState(false);
 const [tryOnImage,setTryOnImage]=useState("");
 const [tryOnError,setTryOnError]=useState("");
+const [chatOpen,setChatOpen]=useState(false);
+const [chatInput,setChatInput]=useState("");
+const [chatBusy,setChatBusy]=useState(false);
+const [chatMessages,setChatMessages]=useState<{role:"user"|"assistant";content:string}[]>([]);
  const t=translations[lang]||extraTranslations[lang]||translations.en;
  const labels:any={texture:[t.straight,t.wavy,t.curly,t.coily],density:[t.fine,t.medium,t.thick],face:[t.unknown,t.oval,t.round,t.square,t.heart,t.oblong,t.diamond],length:[t.short,t.shoulder,t.long],time:[t.five,t.ten,t.twenty,t.more],vibe:[t.natural,t.polished,t.playful,t.romantic,t.bold]};
  const options:any={texture:["Straight","Wavy","Curly","Coily"],density:["Fine","Medium","Thick"],face:["Not sure","Oval","Round","Square","Heart","Oblong","Diamond"],length:["Short","Shoulder length","Long"],time:["5 minutes or less","10 minutes","15–20 minutes","30+ minutes"],vibe:["Natural and effortless","Elegant and polished","Trendy and playful","Soft and romantic","Bold and edgy"]};
@@ -132,6 +136,54 @@ async function tryOn(){
   }
 }
 
+async function sendChat(e?:any){
+  e?.preventDefault();
+
+  const message=chatInput.trim();
+  if(!message||chatBusy)return;
+
+  const next=[
+    ...chatMessages,
+    {role:"user" as const,content:message}
+  ];
+
+  setChatMessages(next);
+  setChatInput("");
+  setChatBusy(true);
+
+  try{
+    const res=await fetch("/api/chat",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        messages:next,
+        language:lang
+      })
+    });
+
+    const data=await res.json();
+
+    if(!res.ok){
+      throw new Error(data.error||"AI assistant is unavailable.");
+    }
+
+    setChatMessages([
+      ...next,
+      {role:"assistant",content:data.reply}
+    ]);
+  }catch(err:any){
+    setChatMessages([
+      ...next,
+      {
+        role:"assistant",
+        content:err.message||"Please try again."
+      }
+    ]);
+  }finally{
+    setChatBusy(false);
+  }
+}
+ 
    return <main dir={lang==="ar"?"rtl":"ltr"}>
   <header className="top"><a className="brand" href="#">style<span>muse</span><i>.</i></a><div className="navright"><span>{t.nav}</span><select aria-label={t.language} value={lang} onChange={e=>setLang(e.target.value)}>{languageOptions.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}{moreLanguages.map(o=><option key={o} value={o}>{({es:"Español",fr:"Français",it:"Italiano",pt:"Português",nl:"Nederlands",pl:"Polski",tr:"Türkçe",ar:"العربية",hi:"हिन्दी",ja:"日本語",ko:"한국어",zh:"中文"} as any)[o]}</option>)}</select></div></header>
   <section className="hero"><div className="heroText"><div className="eyebrow">{t.tag}</div><h1>{t.title}</h1><p>{t.intro}</p><a className="primary" href="#scanner">{t.start} <b>↗</b></a><div className="micro">✦ Personal ideas · Practical tutorials · Your own style</div></div><div className="heroVisual"><div className="halo"></div><div className="heroBadge">THE PERSONAL HAIR EDIT <b>✦</b></div><div className="heroCaption">A little inspiration,<br/><em>made just for you.</em></div></div></section>
@@ -173,6 +225,34 @@ async function tryOn(){
 )}
 </div>
    <p className="disclaimer">{t.disclaimer}</p></section>}
-  <footer><a className="brand" href="#">style<span>muse</span><i>.</i></a><p>Beauty is personal. Your style should be, too.</p><small>© 2026 StyleMuse · Privacy-first by design</small></footer>
+
+<div style={{position:"fixed",right:18,bottom:18,zIndex:50,fontFamily:"inherit"}}>
+  {chatOpen&&(
+    <section style={{width:"min(360px,calc(100vw - 36px))",height:440,maxHeight:"70vh",background:"#fff",color:"#292522",border:"1px solid #e8e0d8",borderRadius:18,boxShadow:"0 12px 40px #0002",display:"flex",flexDirection:"column",overflow:"hidden",marginBottom:12}}>
+      <div style={{padding:"14px 16px",background:"#292522",color:"#fff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <strong>StyleMuse AI Stylist</strong>
+        <button type="button" onClick={()=>setChatOpen(false)} style={{background:"transparent",color:"#fff",border:0,fontSize:22}}>×</button>
+      </div>
+      <div style={{padding:12,overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:10}}>
+        {chatMessages.length===0&&<p style={{fontSize:14}}>{lang==="sr"?"Ćao! Pitaj me za frizure i negu kose.":"Hi! Ask me about hairstyles and hair care."}</p>}
+        {chatMessages.map((m,i)=>(
+          <div key={i} style={{alignSelf:m.role==="user"?"flex-end":"flex-start",maxWidth:"88%",padding:"9px 12px",borderRadius:13,background:m.role==="user"?"#292522":"#f4f0eb",color:m.role==="user"?"#fff":"#292522",fontSize:14,whiteSpace:"pre-wrap"}}>
+            {m.content}
+          </div>
+        ))}
+        {chatBusy&&<small>{lang==="sr"?"AI razmišlja…":"Thinking…"}</small>}
+      </div>
+      <form onSubmit={sendChat} style={{display:"flex",gap:7,padding:10,borderTop:"1px solid #eee7e0"}}>
+        <input value={chatInput} onChange={e=>setChatInput(e.target.value)} placeholder={lang==="sr"?"Napiši poruku…":"Ask your stylist…"} maxLength={1000} style={{minWidth:0,flex:1,padding:"11px 12px",border:"1px solid #ddd2c8",borderRadius:10,fontSize:14}}/>
+        <button type="submit" disabled={chatBusy||!chatInput.trim()} style={{padding:"0 14px",border:0,borderRadius:10,background:"#292522",color:"#fff"}}>➤</button>
+      </form>
+    </section>
+  )}
+  <button type="button" onClick={()=>setChatOpen(!chatOpen)} style={{display:"block",marginLeft:"auto",border:0,borderRadius:999,padding:"14px 19px",background:"#292522",color:"#fff",fontWeight:700,boxShadow:"0 5px 20px #0003"}}>
+    {chatOpen?(lang==="sr"?"Zatvori":"Close"):"✦ AI Stylist"}
+  </button>
+</div>
+
+    <footer><a className="brand" href="#">style<span>muse</span><i>.</i></a><p>Beauty is personal. Your style should be, too.</p><small>© 2026 StyleMuse · Privacy-first by design</small></footer>
  </main>
 }
