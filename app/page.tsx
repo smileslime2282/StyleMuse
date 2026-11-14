@@ -196,7 +196,7 @@ async function sendChat(e?:any){
     <button className="primary full" disabled={busy} onClick={analyze}>{busy?t.loading:t.analyze}</button>{error&&<p className="error">{error}</p>}
     </div></div>
   </section>
- : <LiveMirror />
+ <LiveMirror />
     {result&&<section className="results"><div className="eyebrow">02 — YOUR PERSONAL RECOMMENDATION</div><h2>{t.result}</h2><div className="resultHero"><div><div className="tiny">YOUR SIGNATURE LOOK</div><h3>{result.hairstyle}</h3><p>{result.summary}</p></div><span>✦</span></div><div className="resultCards"><article><h4>{t.why}</h4><p>{result.why}</p></article><article><h4>{t.routine}</h4><ol>{(result.steps||[]).map((s:string,i:number)=><li key={i}>{s}</li>)}</ol></article><article><h4>{t.tools}</h4><ul>{(result.tools||[]).map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></article><article><h4>{t.salon}</h4><p>{result.salon_request}</p></article></div>
    <div className="tryOnPanel">
   <h3>{lang==="sr"?"Isprobaj ovu frizuru na sebi":"Try this hairstyle on yourself"}</h3>
