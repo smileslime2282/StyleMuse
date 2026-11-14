@@ -1,4 +1,5 @@
  "use client";
+import LiveMirror from "./components/LiveMirror";
 import { useMemo, useState } from "react";
 
 const translations: Record<string, Record<string,string>> = {
