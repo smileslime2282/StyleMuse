@@ -160,77 +160,62 @@ export default function LiveMirror() {
       video.srcObject = stream;
       await video.play();
 
-      const vision = await import("@mediapipe/tasks-vision");
-
-      const fileset = await vision.FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-      );
-
-      let landmarker;
+            // Keep the camera preview running even if face tracking cannot load.
+      setActive(true);
+      setLoading(false);
 
       try {
-        landmarker = await vision.FaceLandmarker.createFromOptions(
-          fileset,
-          {
+        const vision = await import("@mediapipe/tasks-vision");
+        const fileset = await vision.FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+        );
+
+        let landmarker;
+        try {
+          landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
             baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
               delegate: "GPU"
             },
             runningMode: "VIDEO",
             numFaces: 1
-          }
-        );
-      } catch {
-        landmarker = await vision.FaceLandmarker.createFromOptions(
-          fileset,
-          {
+          });
+        } catch {
+          landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
             baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
               delegate: "CPU"
             },
             runningMode: "VIDEO",
             numFaces: 1
-          }
-        );
-      }
-
-      landmarkerRef.current = landmarker;
-      setActive(true);
-      setLoading(false);
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas is not supported.");
-
-      const render = () => {
-        if (!video || !canvas || !landmarkerRef.current) return;
-
-        if (video.readyState >= 2) {
-          const width = video.videoWidth;
-          const height = video.videoHeight;
-
-          if (canvas.width !== width || canvas.height !== height) {
-            canvas.width = width;
-            canvas.height = height;
-          }
-
-          ctx.clearRect(0, 0, width, height);
-
-          const result = landmarkerRef.current.detectForVideo(
-            video,
-            performance.now()
-          );
-
-          if (result.faceLandmarks?.length) {
-            drawHair(ctx, result.faceLandmarks[0], width, height);
-          }
+          });
         }
 
-        frameRef.current = requestAnimationFrame(render);
-      };
+        landmarkerRef.current = landmarker;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas is not supported.");
 
-      render();
+        const render = () => {
+          if (!video || !canvas || !landmarkerRef.current) return;
+          if (video.readyState >= 2) {
+            const width = video.videoWidth;
+            const height = video.videoHeight;
+            if (canvas.width !== width || canvas.height !== height) {
+              canvas.width = width;
+              canvas.height = height;
+            }
+            ctx.clearRect(0, 0, width, height);
+            const result = landmarkerRef.current.detectForVideo(video, performance.now());
+            if (result.faceLandmarks?.length) {
+              drawHair(ctx, result.faceLandmarks[0], width, height);
+            }
+          }
+          frameRef.current = requestAnimationFrame(render);
+        };
+        render();
+      } catch (trackingError: any) {
+        setError("Kamera radi, ali praćenje lica nije uspelo. Proveri internet vezu i pokušaj ponovo.");
+      }
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -289,11 +274,11 @@ export default function LiveMirror() {
           autoPlay
           muted
           playsInline
-          className="absolute inset-0 h-full w-full scale-x-[-1] object-cover"
+          className="absolute inset-0 h-full w-full  object-cover"
         />
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 h-full w-full scale-x-[-1] object-cover"
+          className="absolute inset-0 h-full w-full  object-cover"
         />
 
         {!active && !loading && (
