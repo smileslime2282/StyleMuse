@@ -214,7 +214,7 @@ export default function LiveMirror() {
         };
         render();
       } catch (trackingError: any) {
-        setError("Greška praćenja: " + (trackingError?.message || String(trackingError)));
+        setError("Greška praćenja: " + (trackingError instanceof Error ? trackingError.message : JSON.stringify(trackingError)));
       }
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(track => track.stop());
