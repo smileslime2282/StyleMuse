@@ -214,7 +214,7 @@ export default function LiveMirror() {
         };
         render();
       } catch (trackingError: any) {
-        setError("Kamera radi, ali praćenje lica nije uspelo. Proveri internet vezu i pokušaj ponovo.");
+        setError("Greška praćenja: " + (trackingError?.message || String(trackingError)));
       }
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(track => track.stop());
