@@ -215,7 +215,8 @@ export default function LiveMirror() {
         };
         render();
      } catch (trackingError: any) {
-  const details =
+      setError("Greška praćenja u koraku: " + trackingStep);  
+        const details =
     trackingError instanceof Error
       ? trackingError.message
       : trackingError instanceof Event
