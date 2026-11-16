@@ -213,8 +213,15 @@ export default function LiveMirror() {
           frameRef.current = requestAnimationFrame(render);
         };
         render();
-      } catch (trackingError: any) {
-        setError("Greška praćenja: " + (trackingError instanceof Error ? trackingError.message : JSON.stringify(trackingError)));
+     } catch (trackingError: any) {
+  const details =
+    trackingError instanceof Error
+      ? trackingError.message
+      : trackingError instanceof Event
+        ? `${trackingError.type} event`
+        : String(trackingError);
+
+  setError("Greška praćenja: " + details);
       }
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(track => track.stop());
