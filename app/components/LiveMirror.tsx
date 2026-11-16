@@ -165,7 +165,7 @@ export default function LiveMirror() {
       setLoading(false);
 
       try {
-       let trackingStep = "učitavanje MediaPipe";
+       
         const vision = await import("@mediapipe/tasks-vision");
         const fileset = await vision.FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
