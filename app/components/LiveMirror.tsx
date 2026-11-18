@@ -164,7 +164,7 @@ export default function LiveMirror() {
             // Keep the camera preview running even if face tracking cannot load.
       setActive(true);
       setLoading(false);
-let trackingStep = "učitavanje MediaPipe";
+trackingStep = "učitavanje MediaPipe";
       try {
        
         const vision = await import("@mediapipe/tasks-vision");
