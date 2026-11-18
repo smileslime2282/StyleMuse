@@ -136,6 +136,7 @@ export default function LiveMirror() {
   }
 
   async function startCamera() {
+    let trackingStep = "pokretanje kamere";
     setError("");
     setLoading(true);
 
