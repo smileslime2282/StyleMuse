@@ -225,7 +225,7 @@ trackingStep = "učitavanje MediaPipe";
         ? `${trackingError.type} event`
         : String(trackingError);
 
-  setError("Greška praćenja: " + details);
+  setError("Greška u koraku: " + trackingStep + " — " + details);
       }
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(track => track.stop());
